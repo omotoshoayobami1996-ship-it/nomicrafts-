@@ -1,0 +1,1303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>NOMI_CRAFTS Business Manager</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{
+  --royal:#1B2E6B;
+  --royal-deep:#101F4D;
+  --gold:#C9A227;
+  --gold-soft:#E8CE7A;
+  --emerald:#0E6B4E;
+  --ink:#161B2E;
+  --paper:#FAF8F3;
+  --card:#FFFFFF;
+  --line:#E7E1D3;
+  --muted:#6B6656;
+  --danger:#A23B2E;
+  --radius-s:6px;
+  --radius-m:10px;
+  --safe-top:env(safe-area-inset-top,0px);
+  --safe-bottom:env(safe-area-inset-bottom,0px);
+  box-sizing:border-box;
+  padding-top:var(--safe-top);
+  padding-bottom:var(--safe-bottom);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#12141F; --card:#1B1E2E; --ink:#F1EEE4; --line:#2C2F42; --muted:#9B96A8; --royal:#3B57B8; --royal-deep:#1E2A5C;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#12141F; --card:#1B1E2E; --ink:#F1EEE4; --line:#2C2F42; --muted:#9B96A8; --royal:#3B57B8; --royal-deep:#1E2A5C;
+}
+*{box-sizing:border-box}
+html{scroll-padding-top:var(--safe-top)}
+html,body{height:100%}
+body{
+  margin:0;font-family:'Iowan Old Style','Georgia',ui-serif,serif;
+  background:var(--paper); color:var(--ink);
+  -webkit-font-smoothing:antialiased;
+}
+body, input, select, textarea, button { font-family: Georgia, 'Iowan Old Style', serif; }
+.sans{font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;}
+h1,h2,h3,h4{font-family: 'Palatino','Palatino Linotype', Georgia, serif; margin:0; font-weight:600; letter-spacing:.2px;}
+p{margin:0}
+a{color:inherit}
+button{font-family:inherit;cursor:pointer}
+::selection{background:var(--gold-soft)}
+
+/* ---------- Layout shells ---------- */
+#app{display:none;min-height:100%;flex-direction:column;}
+#app.active{display:flex}
+.topbar{
+  position:sticky;top:0;z-index:40;background:var(--royal);color:#fff;
+  padding:calc(14px + var(--safe-top)) 18px 14px;display:flex;align-items:center;justify-content:space-between;
+  box-shadow:0 2px 10px rgba(16,31,77,.18);
+}
+.brandmark{display:flex;align-items:center;gap:10px}
+.brandmark svg{flex:none}
+.brandmark .btext{display:flex;flex-direction:column;line-height:1.1}
+.brandmark .btext b{font-size:17px;letter-spacing:.5px}
+.brandmark .btext span{font-size:10.5px;color:var(--gold-soft);font-family:inherit}
+.topbar-actions{display:flex;align-items:center;gap:10px}
+.iconbtn{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);color:#fff;border-radius:var(--radius-s);padding:8px 10px;font-size:13px;}
+.iconbtn:active{background:rgba(255,255,255,.22)}
+
+nav.desktopnav{display:none}
+main{flex:1;padding:16px 16px calc(96px + var(--safe-bottom));max-width:1080px;margin:0 auto;width:100%}
+@media (min-width:860px){
+  main{padding:24px 32px 48px}
+  nav.desktopnav{
+    display:flex;gap:4px;background:var(--royal-deep);padding:0 32px;
+  }
+  nav.desktopnav a{
+    color:rgba(255,255,255,.72);text-decoration:none;padding:14px 16px;font-size:14px;letter-spacing:.3px;
+    border-bottom:2px solid transparent;font-family:'Palatino',Georgia,serif;
+  }
+  nav.desktopnav a.active{color:#fff;border-bottom-color:var(--gold)}
+  .bottomnav,.fab{display:none !important}
+}
+
+.bottomnav{
+  position:fixed;left:0;right:0;bottom:0;z-index:40;background:var(--card);
+  border-top:1px solid var(--line);display:flex;justify-content:space-around;
+  padding:8px 4px calc(8px + var(--safe-bottom));
+}
+.bottomnav a{display:flex;flex-direction:column;align-items:center;gap:3px;text-decoration:none;color:var(--muted);font-size:10.5px;padding:4px 6px;flex:1;text-align:center}
+.bottomnav a.active{color:var(--royal)}
+.bottomnav svg{width:20px;height:20px}
+
+.fab{
+  position:fixed;right:18px;bottom:calc(78px + var(--safe-bottom));z-index:50;
+  width:56px;height:56px;border-radius:50%;background:var(--gold);color:var(--royal-deep);
+  border:none;font-size:28px;box-shadow:0 6px 16px rgba(0,0,0,.25);display:flex;align-items:center;justify-content:center;
+}
+@media (min-width:860px){.fab{bottom:24px}}
+
+/* ---------- Login ---------- */
+#login{min-height:100%;display:flex;align-items:center;justify-content:center;padding:24px;background:
+  radial-gradient(1200px 500px at 50% -10%, rgba(201,162,39,.18), transparent),var(--royal-deep);
+}
+.login-card{background:var(--card);border-radius:var(--radius-m);padding:36px 28px;max-width:380px;width:100%;box-shadow:0 20px 50px rgba(0,0,0,.35)}
+.login-crest{display:flex;flex-direction:column;align-items:center;margin-bottom:22px;gap:10px}
+.login-crest b{font-size:22px;letter-spacing:1px;color:var(--royal)}
+.login-crest span{font-size:12px;color:var(--muted);font-style:italic}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:12.5px;color:var(--muted);margin-bottom:5px;font-family:inherit}
+.field input, .field select, .field textarea{
+  width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:var(--radius-s);
+  background:var(--paper);color:var(--ink);font-size:15px;
+}
+.field input:focus, .field select:focus, .field textarea:focus{outline:2px solid var(--gold);outline-offset:1px;border-color:var(--gold)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:none;border-radius:var(--radius-s);padding:12px 18px;font-size:14.5px;font-family:inherit;letter-spacing:.2px}
+.btn-primary{background:var(--royal);color:#fff}
+.btn-primary:active{background:var(--royal-deep)}
+.btn-gold{background:var(--gold);color:var(--royal-deep)}
+.btn-outline{background:transparent;border:1px solid var(--line);color:var(--ink)}
+.btn-danger{background:transparent;color:var(--danger);border:1px solid rgba(162,59,46,.4)}
+.btn-block{width:100%}
+.btn-sm{padding:8px 12px;font-size:13px}
+.loginerr{color:var(--danger);font-size:13px;margin-top:8px;display:none}
+.helptext{font-size:11.5px;color:var(--muted);margin-top:14px;text-align:center;line-height:1.5}
+
+/* ---------- Sections ---------- */
+.screen{display:none}
+.screen.active{display:block}
+.pagehead{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;gap:10px;flex-wrap:wrap}
+.pagehead h1{font-size:22px;color:var(--royal-deep)}
+.pagehead .sub{font-size:12.5px;color:var(--muted);margin-top:2px}
+
+.cardgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:18px}
+@media (min-width:640px){.cardgrid{grid-template-columns:repeat(4,1fr)}}
+.metric{background:var(--card);border:1px solid var(--line);border-radius:var(--radius-m);padding:14px}
+.metric .m-label{font-size:11px;color:var(--muted);text-transform:none;letter-spacing:.2px}
+.metric .m-value{font-size:19px;font-weight:700;color:var(--royal-deep);margin-top:6px}
+.metric.gold .m-value{color:#9C7E1B}
+.metric.emerald .m-value{color:var(--emerald)}
+.metric.danger .m-value{color:var(--danger)}
+
+.chip-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.chip{padding:7px 13px;border-radius:999px;border:1px solid var(--line);font-size:12.5px;background:var(--card);color:var(--ink)}
+.chip.active{background:var(--royal);color:#fff;border-color:var(--royal)}
+
+.section-block{background:var(--card);border:1px solid var(--line);border-radius:var(--radius-m);padding:16px;margin-bottom:16px}
+.section-block h3{font-size:14.5px;color:var(--royal-deep);margin-bottom:12px}
+.section-block .headrow{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.section-block .headrow h3{margin-bottom:0}
+.linklike{font-size:12.5px;color:var(--royal);text-decoration:underline}
+
+.list-item{border-bottom:1px solid var(--line);padding:12px 2px;display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.list-item:last-child{border-bottom:none}
+.li-main b{font-size:14.5px;display:block}
+.li-main .li-sub{font-size:12px;color:var(--muted);margin-top:2px}
+.li-right{text-align:right;flex:none}
+.li-right .amt{font-size:14px;font-weight:700}
+.li-right .bal{font-size:11.5px;color:var(--danger);margin-top:2px}
+.badge{display:inline-block;font-size:10.5px;padding:3px 8px;border-radius:999px;margin-top:4px;font-family:inherit}
+.badge.pending{background:#F0E6C8;color:#7A5E12}
+.badge.confirmed{background:#DCE7F7;color:#1B3E7A}
+.badge.completed{background:#DCEEE1;color:#1B6B3F}
+.badge.cancelled{background:#F1DCDA;color:#8A2E24}
+.badge.unpaid{background:#F1DCDA;color:#8A2E24}
+.badge.partial{background:#F0E6C8;color:#7A5E12}
+.badge.paid{background:#DCEEE1;color:#1B6B3F}
+.badge.refunded{background:#E4E0F3;color:#3F2E8A}
+
+.empty{text-align:center;padding:36px 16px;color:var(--muted)}
+.empty p{margin-bottom:14px;font-size:14px}
+
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center}
+.toolbar input[type=search]{flex:1;min-width:150px;padding:10px 12px;border:1px solid var(--line);border-radius:var(--radius-s);background:var(--card);font-size:14px}
+.filter-toggle{padding:9px 12px;border:1px solid var(--line);border-radius:var(--radius-s);background:var(--card);font-size:13px}
+.filterpanel{display:none;background:var(--card);border:1px solid var(--line);border-radius:var(--radius-m);padding:14px;margin-bottom:14px}
+.filterpanel.open{display:block}
+.filterpanel .frow{margin-bottom:10px}
+.filterpanel label{display:block;font-size:11.5px;color:var(--muted);margin-bottom:4px}
+.filterpanel select{width:100%;padding:9px;border:1px solid var(--line);border-radius:var(--radius-s);background:var(--paper);font-size:13.5px}
+
+table{width:100%;border-collapse:collapse}
+.tablewrap{overflow-x:auto}
+th{text-align:left;font-size:11px;color:var(--muted);padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:10px 10px;border-bottom:1px solid var(--line);font-size:13.5px;white-space:nowrap}
+
+.charts-grid{display:grid;grid-template-columns:1fr;gap:14px;margin-bottom:16px}
+@media (min-width:860px){.charts-grid{grid-template-columns:1.3fr 1fr}}
+.chartbox{background:var(--card);border:1px solid var(--line);border-radius:var(--radius-m);padding:14px}
+.chartbox h3{font-size:13.5px;color:var(--royal-deep);margin-bottom:10px}
+.chartbox canvas{max-height:240px}
+
+/* Modal / sheet */
+.overlay{position:fixed;inset:0;background:rgba(14,17,30,.5);z-index:80;display:none;align-items:flex-end;justify-content:center}
+@media (min-width:640px){.overlay{align-items:center}}
+.overlay.open{display:flex}
+.sheet{background:var(--card);width:100%;max-width:520px;max-height:92vh;overflow-y:auto;border-radius:16px 16px 0 0;padding:20px 20px calc(24px + var(--safe-bottom));}
+@media (min-width:640px){.sheet{border-radius:var(--radius-m);padding:24px}}
+.sheet .sheethead{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.sheet .sheethead h2{font-size:18px;color:var(--royal-deep)}
+.sheet .closeb{background:none;border:none;font-size:22px;color:var(--muted);line-height:1}
+.formgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.formgrid .full{grid-column:1/-1}
+.sheetfoot{display:flex;gap:10px;margin-top:18px}
+.sheetfoot .btn{flex:1}
+
+.toast-wrap{position:fixed;top:calc(14px + var(--safe-top));left:0;right:0;display:flex;justify-content:center;z-index:100;pointer-events:none}
+.toast{background:var(--royal-deep);color:#fff;padding:11px 18px;border-radius:999px;font-size:13.5px;box-shadow:0 8px 20px rgba(0,0,0,.3);opacity:0;transform:translateY(-8px);transition:all .25s}
+.toast.show{opacity:1;transform:translateY(0)}
+.toast.err{background:var(--danger)}
+
+.qacts{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.qact{background:var(--card);border:1px solid var(--line);border-radius:var(--radius-m);padding:14px 8px;text-align:center;font-size:12px;color:var(--royal-deep)}
+.qact b{display:block;font-size:20px;margin-bottom:4px}
+
+.customer-hero{background:linear-gradient(135deg,var(--royal),var(--royal-deep));color:#fff;border-radius:var(--radius-m);padding:18px;margin-bottom:16px}
+.customer-hero h2{font-size:19px}
+.customer-hero .chstats{display:flex;gap:18px;margin-top:12px;flex-wrap:wrap}
+.customer-hero .chstats div span{display:block;font-size:11px;color:var(--gold-soft)}
+.customer-hero .chstats div b{font-size:15px}
+
+.gele-arc{width:100%;height:46px;overflow:hidden;margin:-16px -16px 14px -16px;opacity:.9}
+.calbadge{width:9px;height:9px;border-radius:50%;display:inline-block;margin-right:6px}
+</style>
+</head>
+<body>
+
+<div class="toast-wrap" id="toastWrap"></div>
+
+<!-- ===================== LOGIN ===================== -->
+<div id="login">
+  <div class="login-card">
+    <div class="login-crest">
+      <svg width="46" height="46" viewBox="0 0 46 46" fill="none"><circle cx="23" cy="23" r="22" stroke="#C9A227" stroke-width="1.5"/><path d="M12 27c3-8 8-13 11-13s8 5 11 13c-4 3-8 4-11 4s-7-1-11-4Z" stroke="#1B2E6B" stroke-width="1.6" stroke-linejoin="round"/><path d="M14 25c2-1 5-2 9-2s7 1 9 2" stroke="#1B2E6B" stroke-width="1.2"/></svg>
+      <b>NOMI_CRAFTS</b>
+      <span>Creating Timeless Gele Elegance for Every Occasion</span>
+    </div>
+    <div id="loginSetup" style="display:none">
+      <p class="sans" style="font-size:12.5px;color:var(--muted);margin-bottom:14px">Set up your admin account to secure this business manager.</p>
+    </div>
+    <form id="loginForm">
+      <div class="field"><label>Email</label><input type="email" id="loginEmail" required autocomplete="username"></div>
+      <div class="field"><label>Password</label><input type="password" id="loginPassword" required autocomplete="current-password"></div>
+      <button type="submit" class="btn btn-primary btn-block" id="loginSubmitBtn">Log In</button>
+      <p class="loginerr" id="loginErr"></p>
+    </form>
+    <p class="helptext" id="loginHelp">Private business system for NOMI_CRAFTS. Access is restricted to the business owner.</p>
+  </div>
+</div>
+
+<!-- ===================== APP SHELL ===================== -->
+<div id="app">
+  <div class="topbar">
+    <div class="brandmark">
+      <svg width="30" height="30" viewBox="0 0 46 46" fill="none"><circle cx="23" cy="23" r="22" stroke="#C9A227" stroke-width="1.5"/><path d="M12 27c3-8 8-13 11-13s8 5 11 13c-4 3-8 4-11 4s-7-1-11-4Z" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg>
+      <div class="btext"><b>NOMI_CRAFTS</b><span>Business Manager</span></div>
+    </div>
+    <div class="topbar-actions">
+      <button class="iconbtn sans" onclick="toggleTheme()" id="themeBtn">☾</button>
+      <button class="iconbtn sans" onclick="logout()">Log out</button>
+    </div>
+  </div>
+
+  <nav class="desktopnav sans">
+    <a href="#" data-nav="dashboard">Dashboard</a>
+    <a href="#" data-nav="bookings">Bookings</a>
+    <a href="#" data-nav="customers">Customers</a>
+    <a href="#" data-nav="expenses">Expenses</a>
+    <a href="#" data-nav="reports">Reports</a>
+  </nav>
+
+  <main id="main">
+
+    <!-- DASHBOARD -->
+    <section class="screen" id="screen-dashboard">
+      <div class="pagehead">
+        <div><h1>Dashboard</h1><p class="sub sans" id="dashDateLabel"></p></div>
+      </div>
+      <div class="chip-row" id="dashRangeChips"></div>
+      <div id="dashCustomRange" style="display:none" class="section-block">
+        <div class="formgrid">
+          <div class="field"><label>From</label><input type="date" id="dashFrom"></div>
+          <div class="field"><label>To</label><input type="date" id="dashTo"></div>
+          <button class="btn btn-primary full" style="grid-column:1/-1" onclick="applyDashCustom()">Apply</button>
+        </div>
+      </div>
+
+      <div class="cardgrid">
+        <div class="metric emerald"><div class="m-label sans">Total Income</div><div class="m-value" id="mIncome">₦0</div></div>
+        <div class="metric danger"><div class="m-label sans">Total Expenses</div><div class="m-value" id="mExpenses">₦0</div></div>
+        <div class="metric"><div class="m-label sans">Net Profit</div><div class="m-value" id="mProfit">₦0</div></div>
+        <div class="metric gold"><div class="m-label sans">Outstanding</div><div class="m-value" id="mOutstanding">₦0</div></div>
+      </div>
+      <div class="cardgrid">
+        <div class="metric"><div class="m-label sans">Total Bookings</div><div class="m-value" id="mTotalBookings">0</div></div>
+        <div class="metric"><div class="m-label sans">Paid</div><div class="m-value" id="mPaidB">0</div></div>
+        <div class="metric"><div class="m-label sans">Partially Paid</div><div class="m-value" id="mPartialB">0</div></div>
+        <div class="metric"><div class="m-label sans">Unpaid</div><div class="m-value" id="mUnpaidB">0</div></div>
+      </div>
+      <div class="section-block">
+        <div class="m-label sans">Average Booking Value</div>
+        <div class="m-value" id="mAvgBooking" style="font-size:20px;margin-top:4px">₦0</div>
+      </div>
+
+      <div class="charts-grid">
+        <div class="chartbox"><h3>Income vs Expenses (last 6 months)</h3><canvas id="chartIncExp"></canvas></div>
+        <div class="chartbox"><h3>Expense Categories</h3><canvas id="chartExpCat"></canvas></div>
+      </div>
+      <div class="chartbox" style="margin-bottom:16px"><h3>Monthly Income Trend</h3><canvas id="chartIncomeTrend"></canvas></div>
+
+      <div class="section-block">
+        <div class="headrow"><h3>Upcoming Bookings</h3><a class="linklike sans" href="#" onclick="goTo('bookings');return false;">View All</a></div>
+        <div id="dashUpcoming"></div>
+      </div>
+
+      <div class="section-block">
+        <div class="headrow"><h3>Outstanding Payments</h3><a class="linklike sans" href="#" onclick="goTo('outstanding');return false;">View All</a></div>
+        <div id="dashOutstanding"></div>
+      </div>
+    </section>
+
+    <!-- BOOKINGS -->
+    <section class="screen" id="screen-bookings">
+      <div class="pagehead"><div><h1>Bookings</h1><p class="sub sans" id="bookingsCount"></p></div>
+        <button class="btn btn-gold btn-sm sans" onclick="openBookingForm()">+ Add Booking</button>
+      </div>
+      <div class="toolbar sans">
+        <input type="search" id="bookingSearch" placeholder="Search client, ID, phone, service…" oninput="renderBookings()">
+        <button class="filter-toggle" onclick="toggleFilter('bookingFilters')">Filters</button>
+      </div>
+      <div class="filterpanel sans" id="bookingFilters">
+        <div class="formgrid">
+          <div class="frow"><label>Date</label><select id="fBookingDate" onchange="renderBookings()">
+            <option value="all">All</option><option value="today">Today</option><option value="week">This Week</option><option value="month">This Month</option><option value="year">This Year</option></select></div>
+          <div class="frow"><label>Booking Status</label><select id="fBookingStatus" onchange="renderBookings()">
+            <option value="all">All</option><option>Pending</option><option>Confirmed</option><option>Completed</option><option>Cancelled</option></select></div>
+          <div class="frow"><label>Payment Status</label><select id="fPaymentStatus" onchange="renderBookings()">
+            <option value="all">All</option><option>Unpaid</option><option>Partially Paid</option><option>Paid</option><option>Refunded</option></select></div>
+          <div class="frow"><label>Service</label><select id="fService" onchange="renderBookings()"></select></div>
+        </div>
+      </div>
+      <div id="bookingsList"></div>
+    </section>
+
+    <!-- OUTSTANDING -->
+    <section class="screen" id="screen-outstanding">
+      <div class="pagehead"><div><h1>Outstanding Payments</h1></div></div>
+      <div class="chip-row sans" id="outstandingSort"></div>
+      <div id="outstandingList"></div>
+    </section>
+
+    <!-- CUSTOMERS -->
+    <section class="screen" id="screen-customers">
+      <div class="pagehead"><div><h1>Customers</h1><p class="sub sans" id="customersCount"></p></div>
+        <button class="btn btn-gold btn-sm sans" onclick="openCustomerForm()">+ Add Customer</button>
+      </div>
+      <div class="toolbar sans"><input type="search" id="customerSearch" placeholder="Search name, phone, email…" oninput="renderCustomers()"></div>
+      <div id="customersList"></div>
+    </section>
+
+    <!-- CUSTOMER PROFILE -->
+    <section class="screen" id="screen-customerProfile">
+      <button class="linklike sans" style="margin-bottom:10px;display:inline-block" onclick="goTo('customers')">← Back to Customers</button>
+      <div id="customerProfileBody"></div>
+    </section>
+
+    <!-- BOOKING DETAIL -->
+    <section class="screen" id="screen-bookingDetail">
+      <button class="linklike sans" style="margin-bottom:10px;display:inline-block" onclick="goTo('bookings')">← Back to Bookings</button>
+      <div id="bookingDetailBody"></div>
+    </section>
+
+    <!-- EXPENSES -->
+    <section class="screen" id="screen-expenses">
+      <div class="pagehead"><div><h1>Expenses</h1><p class="sub sans" id="expensesCount"></p></div>
+        <button class="btn btn-gold btn-sm sans" onclick="openExpenseForm()">+ Add Expense</button>
+      </div>
+      <div class="toolbar sans">
+        <input type="search" id="expenseSearch" placeholder="Search description, category…" oninput="renderExpenses()">
+        <button class="filter-toggle" onclick="toggleFilter('expenseFilters')">Filters</button>
+      </div>
+      <div class="filterpanel sans" id="expenseFilters">
+        <div class="formgrid">
+          <div class="frow"><label>Date</label><select id="fExpenseDate" onchange="renderExpenses()">
+            <option value="all">All</option><option value="today">Today</option><option value="week">This Week</option><option value="month">This Month</option><option value="year">This Year</option></select></div>
+          <div class="frow"><label>Category</label><select id="fExpenseCategory" onchange="renderExpenses()"></select></div>
+        </div>
+      </div>
+      <div class="section-block" style="margin-bottom:12px"><div class="m-label sans">Total (filtered)</div><div class="m-value" id="expTotalFiltered">₦0</div></div>
+      <div id="expensesList"></div>
+    </section>
+
+    <!-- REPORTS -->
+    <section class="screen" id="screen-reports">
+      <div class="pagehead"><div><h1>Reports</h1></div></div>
+      <div class="chip-row sans" id="reportRangeChips"></div>
+      <div id="reportCustomRange" style="display:none" class="section-block">
+        <div class="formgrid">
+          <div class="field"><label>From</label><input type="date" id="repFrom"></div>
+          <div class="field"><label>To</label><input type="date" id="repTo"></div>
+          <button class="btn btn-primary full" style="grid-column:1/-1" onclick="applyReportCustom()">Apply</button>
+        </div>
+      </div>
+      <div class="section-block">
+        <h3 id="reportTitle">This Month</h3>
+        <div class="cardgrid" style="margin-top:10px">
+          <div class="metric"><div class="m-label sans">Bookings</div><div class="m-value" id="rBookings">0</div></div>
+          <div class="metric"><div class="m-label sans">Booking Value</div><div class="m-value" id="rBookingValue">₦0</div></div>
+          <div class="metric emerald"><div class="m-label sans">Amount Received</div><div class="m-value" id="rReceived">₦0</div></div>
+          <div class="metric gold"><div class="m-label sans">Outstanding</div><div class="m-value" id="rOutstanding">₦0</div></div>
+          <div class="metric danger"><div class="m-label sans">Expenses</div><div class="m-value" id="rExpenses">₦0</div></div>
+          <div class="metric"><div class="m-label sans">Net Profit</div><div class="m-value" id="rProfit">₦0</div></div>
+        </div>
+        <div class="metric" style="margin-top:10px"><div class="m-label sans">Average Booking Value</div><div class="m-value" id="rAvg">₦0</div></div>
+      </div>
+      <div class="section-block" id="yearlyBreakdownWrap" style="display:none">
+        <h3>Monthly Breakdown</h3>
+        <div class="tablewrap sans"><table id="monthlyBreakdownTable"><thead><tr><th>Month</th><th>Bookings</th><th>Received</th><th>Expenses</th><th>Profit</th></tr></thead><tbody></tbody></table></div>
+      </div>
+      <div class="section-block sans">
+        <h3>Export</h3>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn btn-outline btn-sm" onclick="exportCSV('bookings')">Export Bookings CSV</button>
+          <button class="btn btn-outline btn-sm" onclick="exportCSV('expenses')">Export Expenses CSV</button>
+          <button class="btn btn-outline btn-sm" onclick="exportCSV('report')">Export This Report CSV</button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <div class="bottomnav sans" id="bottomNav"></div>
+  <button class="fab" onclick="openQuickAdd()" aria-label="Add">+</button>
+</div>
+
+<!-- ===================== MODALS ===================== -->
+<div class="overlay" id="overlayQuickAdd"><div class="sheet">
+  <div class="sheethead"><h2>Add</h2><button class="closeb" onclick="closeOverlay('overlayQuickAdd')">×</button></div>
+  <div class="qacts sans">
+    <button class="qact" onclick="closeOverlay('overlayQuickAdd');openBookingForm()"><b>📋</b>Booking</button>
+    <button class="qact" onclick="closeOverlay('overlayQuickAdd');openExpenseForm()"><b>🧾</b>Expense</button>
+    <button class="qact" onclick="closeOverlay('overlayQuickAdd');openPaymentPicker()"><b>💳</b>Payment</button>
+  </div>
+</div></div>
+
+<div class="overlay" id="overlayPaymentPicker"><div class="sheet">
+  <div class="sheethead"><h2>Record Payment</h2><button class="closeb" onclick="closeOverlay('overlayPaymentPicker')">×</button></div>
+  <p class="sans" style="font-size:12.5px;color:var(--muted);margin-bottom:10px">Select the booking to record a payment for.</p>
+  <input type="search" class="sans" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:6px;margin-bottom:10px" placeholder="Search bookings…" oninput="renderPaymentPickerList(this.value)">
+  <div id="paymentPickerList" style="max-height:340px;overflow-y:auto"></div>
+</div></div>
+
+<div class="overlay" id="overlayBooking"><div class="sheet">
+  <div class="sheethead"><h2 id="bookingFormTitle">Add Booking</h2><button class="closeb" onclick="closeOverlay('overlayBooking')">×</button></div>
+  <form id="bookingForm" class="sans" onsubmit="return saveBooking(event)">
+    <input type="hidden" id="bkId">
+    <div class="formgrid">
+      <div class="field full"><label>Client *</label><select id="bkCustomer" required></select></div>
+      <div class="field full"><label>New client name (if not listed)</label><input type="text" id="bkNewCustomerName" placeholder="Leave blank if selecting above"></div>
+      <div class="field"><label>New client phone</label><input type="text" id="bkNewCustomerPhone"></div>
+      <div class="field"><label>New client email</label><input type="email" id="bkNewCustomerEmail"></div>
+      <div class="field"><label>Booking Date *</label><input type="date" id="bkBookingDate" required></div>
+      <div class="field"><label>Event Date *</label><input type="date" id="bkEventDate" required></div>
+      <div class="field"><label>Event Type</label><select id="bkEventType"></select></div>
+      <div class="field"><label>Service *</label><select id="bkService" required></select></div>
+      <div class="field"><label>Location</label><input type="text" id="bkLocation" placeholder="Minna / Abuja / venue"></div>
+      <div class="field"><label>Number of People</label><input type="number" id="bkPeople" min="1" value="1"></div>
+      <div class="field"><label>Amount Charged (₦) *</label><input type="number" id="bkAmount" min="0" step="100" required></div>
+      <div class="field"><label>Booking Status</label><select id="bkStatus"><option>Pending</option><option>Confirmed</option><option>Completed</option><option>Cancelled</option></select></div>
+      <div class="field full"><label>Notes</label><textarea id="bkNotes" rows="2"></textarea></div>
+    </div>
+    <div class="sheetfoot"><button type="button" class="btn btn-outline" onclick="closeOverlay('overlayBooking')">Cancel</button><button type="submit" class="btn btn-primary">Save Booking</button></div>
+  </form>
+</div></div>
+
+<div class="overlay" id="overlayExpense"><div class="sheet">
+  <div class="sheethead"><h2 id="expenseFormTitle">Add Expense</h2><button class="closeb" onclick="closeOverlay('overlayExpense')">×</button></div>
+  <form id="expenseForm" class="sans" onsubmit="return saveExpense(event)">
+    <input type="hidden" id="exId">
+    <div class="formgrid">
+      <div class="field"><label>Expense Date *</label><input type="date" id="exDate" required></div>
+      <div class="field"><label>Amount (₦) *</label><input type="number" id="exAmount" min="0" step="50" required></div>
+      <div class="field full"><label>Category *</label><select id="exCategory" required></select></div>
+      <div class="field full" id="exCustomCatWrap" style="display:none"><label>New Category Name</label><input type="text" id="exNewCategory"></div>
+      <div class="field full"><label>Description *</label><input type="text" id="exDescription" required></div>
+      <div class="field"><label>Payment Method</label><select id="exMethod"><option>Cash</option><option>Bank Transfer</option><option>POS</option><option>Online Payment</option><option>Other</option></select></div>
+      <div class="field full"><label>Notes</label><textarea id="exNotes" rows="2"></textarea></div>
+    </div>
+    <div class="sheetfoot"><button type="button" class="btn btn-outline" onclick="closeOverlay('overlayExpense')">Cancel</button><button type="submit" class="btn btn-primary">Save Expense</button></div>
+  </form>
+</div></div>
+
+<div class="overlay" id="overlayCustomer"><div class="sheet">
+  <div class="sheethead"><h2 id="customerFormTitle">Add Customer</h2><button class="closeb" onclick="closeOverlay('overlayCustomer')">×</button></div>
+  <form id="customerForm" class="sans" onsubmit="return saveCustomer(event)">
+    <input type="hidden" id="cuId">
+    <div class="formgrid">
+      <div class="field full"><label>Full Name *</label><input type="text" id="cuName" required></div>
+      <div class="field"><label>Phone</label><input type="text" id="cuPhone"></div>
+      <div class="field"><label>Email</label><input type="email" id="cuEmail"></div>
+      <div class="field full"><label>Notes</label><textarea id="cuNotes" rows="2"></textarea></div>
+    </div>
+    <div class="sheetfoot"><button type="button" class="btn btn-outline" onclick="closeOverlay('overlayCustomer')">Cancel</button><button type="submit" class="btn btn-primary">Save Customer</button></div>
+  </form>
+</div></div>
+
+<div class="overlay" id="overlayPayment"><div class="sheet">
+  <div class="sheethead"><h2>Record Payment</h2><button class="closeb" onclick="closeOverlay('overlayPayment')">×</button></div>
+  <p class="sans" id="payForBooking" style="font-size:12.5px;color:var(--muted);margin-bottom:12px"></p>
+  <form id="paymentForm" class="sans" onsubmit="return savePayment(event)">
+    <input type="hidden" id="payBookingId">
+    <div class="formgrid">
+      <div class="field"><label>Amount (₦) *</label><input type="number" id="payAmount" min="1" step="50" required></div>
+      <div class="field"><label>Payment Date *</label><input type="date" id="payDate" required></div>
+      <div class="field"><label>Payment Method</label><select id="payMethod"><option>Cash</option><option>Bank Transfer</option><option>POS</option><option>Online Payment</option><option>Other</option></select></div>
+      <div class="field full"><label>Notes</label><input type="text" id="payNotes"></div>
+    </div>
+    <div class="sheetfoot"><button type="button" class="btn btn-outline" onclick="closeOverlay('overlayPayment')">Cancel</button><button type="submit" class="btn btn-primary">Save Payment</button></div>
+  </form>
+</div></div>
+
+<script>
+/* ===================== STORAGE & AUTH ===================== */
+const LS_KEY = 'nomicrafts_v1';
+function loadDB(){
+  try{
+    const raw = localStorage.getItem(LS_KEY);
+    if(raw) return JSON.parse(raw);
+  }catch(e){}
+  return {
+    auth:null,
+    customers:[], bookings:[], payments:[], expenses:[],
+    settings:{
+      services:['Individual Gele','Bridal Gele','Aso-Oke Gele','Traditional Wedding','Party/Event Guest','Group Booking','Masterclass','Other'],
+      eventTypes:['Wedding','Traditional Wedding','Birthday','Naming Ceremony','Religious Event','Photoshoot','Party','Other'],
+      expenseCategories:['Gele Materials','Aso-Oke/Fabric','Transportation','Equipment/Tools','Marketing','Phone/Internet','Training','Packaging','Business Operations','Venue/Studio','Staff/Assistance','Miscellaneous']
+    },
+    bookingSeq:0,
+    theme:'dark'
+  };
+}
+let DB = loadDB();
+function saveDB(){ localStorage.setItem(LS_KEY, JSON.stringify(DB)); }
+
+function simpleHash(str){
+  let h = 0;
+  for(let i=0;i<str.length;i++){ h = (Math.imul(31,h) + str.charCodeAt(i))|0; }
+  return 'h'+h;
+}
+function uid(prefix){ return prefix+'_'+Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+
+function toast(msg, isErr){
+  const wrap = document.getElementById('toastWrap');
+  const t = document.createElement('div');
+  t.className = 'toast'+(isErr?' err':'');
+  t.textContent = msg;
+  wrap.appendChild(t);
+  requestAnimationFrame(()=>t.classList.add('show'));
+  setTimeout(()=>{ t.classList.remove('show'); setTimeout(()=>t.remove(),300); }, 2600);
+}
+
+document.getElementById('loginForm').addEventListener('submit', function(e){
+  e.preventDefault();
+  const email = document.getElementById('loginEmail').value.trim().toLowerCase();
+  const pass = document.getElementById('loginPassword').value;
+  const errEl = document.getElementById('loginErr');
+  errEl.style.display='none';
+  if(!DB.auth){
+    if(pass.length < 4){ errEl.textContent='Password should be at least 4 characters.'; errEl.style.display='block'; return; }
+    DB.auth = { email, passHash: simpleHash(pass) };
+    saveDB();
+    sessionStorage.setItem('nomicrafts_session','1');
+    enterApp();
+    toast('Admin account created. Welcome!');
+    return;
+  }
+  if(email === DB.auth.email && simpleHash(pass) === DB.auth.passHash){
+    sessionStorage.setItem('nomicrafts_session','1');
+    enterApp();
+  } else {
+    errEl.textContent = 'Incorrect email or password.';
+    errEl.style.display='block';
+  }
+});
+
+function logout(){
+  sessionStorage.removeItem('nomicrafts_session');
+  document.getElementById('app').classList.remove('active');
+  document.getElementById('login').style.display='flex';
+  document.getElementById('loginPassword').value='';
+}
+
+function initLoginScreen(){
+  if(!DB.auth){
+    document.getElementById('loginSetup').style.display='block';
+    document.getElementById('loginSubmitBtn').textContent='Create Admin Account';
+    document.getElementById('loginHelp').textContent='This is your first time here — set an email and password to secure NOMI_CRAFTS Business Manager.';
+  } else {
+    document.getElementById('loginSetup').style.display='none';
+    document.getElementById('loginSubmitBtn').textContent='Log In';
+    document.getElementById('loginHelp').textContent='Private business system for NOMI_CRAFTS. Access is restricted to the business owner.';
+  }
+}
+
+function enterApp(){
+  document.getElementById('login').style.display='none';
+  document.getElementById('app').classList.add('active');
+  applyTheme();
+  populateStaticSelects();
+  goTo('dashboard');
+}
+
+function applyTheme(){
+  document.documentElement.setAttribute('data-theme', DB.theme==='light'?'light':'dark');
+  document.getElementById('themeBtn').textContent = DB.theme==='light' ? '☀' : '☾';
+}
+function toggleTheme(){ DB.theme = DB.theme==='light' ? 'dark' : 'light'; saveDB(); applyTheme(); }
+
+window.addEventListener('load', function(){
+  initLoginScreen();
+  if(sessionStorage.getItem('nomicrafts_session')==='1' && DB.auth){ enterApp(); }
+  document.getElementById('bkBookingDate').value = todayISO();
+  document.getElementById('exDate').value = todayISO();
+  document.getElementById('payDate').value = todayISO();
+});
+
+/* ===================== NAV ===================== */
+const NAV_ITEMS = [
+  {id:'dashboard', label:'Home', icon:'🏠'},
+  {id:'bookings', label:'Bookings', icon:'📋'},
+  {id:'customers', label:'Customers', icon:'👥'},
+  {id:'expenses', label:'Expenses', icon:'🧾'},
+  {id:'reports', label:'Reports', icon:'📊'},
+];
+function buildNav(){
+  const bn = document.getElementById('bottomNav');
+  bn.innerHTML = NAV_ITEMS.map(n=>`<a href="#" data-nav="${n.id}" onclick="goTo('${n.id}');return false;"><span style="font-size:17px">${n.icon}</span>${n.label}</a>`).join('');
+  document.querySelectorAll('nav.desktopnav a').forEach(a=>{
+    a.onclick = (e)=>{ e.preventDefault(); goTo(a.dataset.nav); };
+  });
+}
+buildNav();
+
+let currentScreen = 'dashboard';
+function goTo(screenId, param){
+  currentScreen = screenId;
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  const target = document.getElementById('screen-'+screenId);
+  if(target) target.classList.add('active');
+  document.querySelectorAll('.bottomnav a, nav.desktopnav a').forEach(a=>{
+    a.classList.toggle('active', a.dataset.nav===screenId || (screenId==='outstanding' && a.dataset.nav==='dashboard') || (screenId==='bookingDetail' && a.dataset.nav==='bookings') || (screenId==='customerProfile' && a.dataset.nav==='customers'));
+  });
+  window.scrollTo(0,0);
+  if(screenId==='dashboard') renderDashboard();
+  if(screenId==='bookings') renderBookings();
+  if(screenId==='outstanding') renderOutstandingScreen();
+  if(screenId==='customers') renderCustomers();
+  if(screenId==='expenses') renderExpenses();
+  if(screenId==='reports') renderReports();
+  if(screenId==='customerProfile' && param) renderCustomerProfile(param);
+  if(screenId==='bookingDetail' && param) renderBookingDetail(param);
+}
+
+/* ===================== HELPERS ===================== */
+function todayISO(){ return new Date().toISOString().slice(0,10); }
+function fmtMoney(n){ n = Math.round(n||0); return '₦'+n.toLocaleString('en-NG'); }
+function fmtDate(iso){ if(!iso) return '—'; const d=new Date(iso+'T00:00:00'); return d.toLocaleDateString('en-NG',{day:'numeric',month:'short',year:'numeric'}); }
+function fmtDateShort(iso){ if(!iso) return '—'; const d=new Date(iso+'T00:00:00'); return d.toLocaleDateString('en-NG',{day:'numeric',month:'short'}); }
+
+function bookingPayments(bookingId){ return DB.payments.filter(p=>p.bookingId===bookingId); }
+function bookingPaid(bookingId){ return bookingPayments(bookingId).reduce((s,p)=>s+p.amount,0); }
+function bookingBalance(b){ return Math.max(0, b.amountCharged - bookingPaid(b.id)); }
+function bookingPaymentStatus(b){
+  const paid = bookingPaid(b.id);
+  if(paid<=0) return 'Unpaid';
+  if(paid < b.amountCharged) return 'Partially Paid';
+  return 'Paid';
+}
+function customerName(id){ const c = DB.customers.find(c=>c.id===id); return c? c.name : 'Unknown Client'; }
+function customerById(id){ return DB.customers.find(c=>c.id===id); }
+
+function nextBookingRef(){
+  DB.bookingSeq = (DB.bookingSeq||0) + 1;
+  const yr = new Date().getFullYear();
+  return 'NOMI-'+yr+'-'+String(DB.bookingSeq).padStart(4,'0');
+}
+
+function withinRange(dateStr, from, to){
+  if(!dateStr) return false;
+  return dateStr >= from && dateStr <= to;
+}
+function rangeFor(period){
+  const now = new Date();
+  let from, to;
+  if(period==='week'){
+    const day = now.getDay()===0?7:now.getDay();
+    const monday = new Date(now); monday.setDate(now.getDate()-day+1);
+    const sunday = new Date(monday); sunday.setDate(monday.getDate()+6);
+    from = monday.toISOString().slice(0,10); to = sunday.toISOString().slice(0,10);
+  } else if(period==='month'){
+    from = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0,10);
+    to = new Date(now.getFullYear(), now.getMonth()+1, 0).toISOString().slice(0,10);
+  } else if(period==='year'){
+    from = new Date(now.getFullYear(),0,1).toISOString().slice(0,10);
+    to = new Date(now.getFullYear(),11,31).toISOString().slice(0,10);
+  } else if(period==='today'){
+    from = to = todayISO();
+  }
+  return {from, to};
+}
+
+function populateStaticSelects(){
+  const svcSel = document.getElementById('bkService');
+  svcSel.innerHTML = DB.settings.services.map(s=>`<option>${s}</option>`).join('');
+  const evtSel = document.getElementById('bkEventType');
+  evtSel.innerHTML = DB.settings.eventTypes.map(s=>`<option>${s}</option>`).join('');
+  const fSvc = document.getElementById('fService');
+  fSvc.innerHTML = '<option value="all">All Services</option>'+DB.settings.services.map(s=>`<option>${s}</option>`).join('');
+  const catSel = document.getElementById('exCategory');
+  catSel.innerHTML = DB.settings.expenseCategories.map(s=>`<option>${s}</option>`).join('')+'<option value="__custom__">+ Add new category…</option>';
+  const fCat = document.getElementById('fExpenseCategory');
+  fCat.innerHTML = '<option value="all">All Categories</option>'+DB.settings.expenseCategories.map(s=>`<option>${s}</option>`).join('');
+  const custSel = document.getElementById('bkCustomer');
+  custSel.innerHTML = '<option value="">— Select existing client —</option>'+DB.customers.map(c=>`<option value="${c.id}">${c.name}${c.phone?' ('+c.phone+')':''}</option>`).join('');
+}
+
+document.getElementById('exCategory').addEventListener('change', function(){
+  document.getElementById('exCustomCatWrap').style.display = this.value==='__custom__' ? 'block':'none';
+});
+
+/* ===================== OVERLAYS ===================== */
+function closeOverlay(id){ document.getElementById(id).classList.remove('open'); }
+function openOverlay(id){ document.getElementById(id).classList.add('open'); }
+function openQuickAdd(){ openOverlay('overlayQuickAdd'); }
+function toggleFilter(id){ document.getElementById(id).classList.toggle('open'); }
+
+/* ---- Booking form ---- */
+function openBookingForm(existing){
+  populateStaticSelects();
+  document.getElementById('bookingForm').reset();
+  document.getElementById('bkId').value='';
+  document.getElementById('bookingFormTitle').textContent='Add Booking';
+  document.getElementById('bkBookingDate').value = todayISO();
+  document.getElementById('bkPeople').value = 1;
+  if(existing){
+    document.getElementById('bookingFormTitle').textContent='Edit Booking';
+    document.getElementById('bkId').value = existing.id;
+    document.getElementById('bkCustomer').value = existing.customerId;
+    document.getElementById('bkBookingDate').value = existing.bookingDate;
+    document.getElementById('bkEventDate').value = existing.eventDate;
+    document.getElementById('bkEventType').value = existing.eventType;
+    document.getElementById('bkService').value = existing.service;
+    document.getElementById('bkLocation').value = existing.location||'';
+    document.getElementById('bkPeople').value = existing.people||1;
+    document.getElementById('bkAmount').value = existing.amountCharged;
+    document.getElementById('bkStatus').value = existing.status;
+    document.getElementById('bkNotes').value = existing.notes||'';
+  }
+  openOverlay('overlayBooking');
+}
+function saveBooking(e){
+  e.preventDefault();
+  let customerId = document.getElementById('bkCustomer').value;
+  const newName = document.getElementById('bkNewCustomerName').value.trim();
+  if(!customerId && newName){
+    const c = { id: uid('cust'), name:newName, phone:document.getElementById('bkNewCustomerPhone').value.trim(), email:document.getElementById('bkNewCustomerEmail').value.trim(), notes:'', dateAdded: todayISO() };
+    DB.customers.push(c);
+    customerId = c.id;
+  }
+  if(!customerId){ toast('Please select or add a client.', true); return false; }
+  const id = document.getElementById('bkId').value;
+  const amount = parseFloat(document.getElementById('bkAmount').value)||0;
+  if(amount < 0){ toast('Amount cannot be negative.', true); return false; }
+  if(id){
+    const b = DB.bookings.find(x=>x.id===id);
+    Object.assign(b, {
+      customerId, bookingDate:document.getElementById('bkBookingDate').value, eventDate:document.getElementById('bkEventDate').value,
+      eventType:document.getElementById('bkEventType').value, service:document.getElementById('bkService').value,
+      location:document.getElementById('bkLocation').value, people:parseInt(document.getElementById('bkPeople').value)||1,
+      amountCharged:amount, status:document.getElementById('bkStatus').value, notes:document.getElementById('bkNotes').value,
+      updatedAt: new Date().toISOString()
+    });
+    toast('Booking updated successfully.');
+  } else {
+    const b = {
+      id: uid('bk'), bookingRef: nextBookingRef(), customerId,
+      bookingDate:document.getElementById('bkBookingDate').value, eventDate:document.getElementById('bkEventDate').value,
+      eventType:document.getElementById('bkEventType').value, service:document.getElementById('bkService').value,
+      location:document.getElementById('bkLocation').value, people:parseInt(document.getElementById('bkPeople').value)||1,
+      amountCharged:amount, status:document.getElementById('bkStatus').value, notes:document.getElementById('bkNotes').value,
+      createdAt:new Date().toISOString(), updatedAt:new Date().toISOString()
+    };
+    DB.bookings.push(b);
+    toast('Booking saved successfully.');
+  }
+  saveDB();
+  closeOverlay('overlayBooking');
+  populateStaticSelects();
+  refreshCurrentScreen();
+  return false;
+}
+
+/* ---- Expense form ---- */
+function openExpenseForm(existing){
+  populateStaticSelects();
+  document.getElementById('expenseForm').reset();
+  document.getElementById('exId').value='';
+  document.getElementById('exCustomCatWrap').style.display='none';
+  document.getElementById('expenseFormTitle').textContent='Add Expense';
+  document.getElementById('exDate').value = todayISO();
+  if(existing){
+    document.getElementById('expenseFormTitle').textContent='Edit Expense';
+    document.getElementById('exId').value = existing.id;
+    document.getElementById('exDate').value = existing.date;
+    document.getElementById('exAmount').value = existing.amount;
+    document.getElementById('exCategory').value = existing.category;
+    document.getElementById('exDescription').value = existing.description;
+    document.getElementById('exMethod').value = existing.method;
+    document.getElementById('exNotes').value = existing.notes||'';
+  }
+  openOverlay('overlayExpense');
+}
+function saveExpense(e){
+  e.preventDefault();
+  let category = document.getElementById('exCategory').value;
+  if(category==='__custom__'){
+    const newCat = document.getElementById('exNewCategory').value.trim();
+    if(!newCat){ toast('Enter a category name.', true); return false; }
+    if(!DB.settings.expenseCategories.includes(newCat)) DB.settings.expenseCategories.push(newCat);
+    category = newCat;
+  }
+  const amount = parseFloat(document.getElementById('exAmount').value)||0;
+  if(amount < 0){ toast('Amount cannot be negative.', true); return false; }
+  const id = document.getElementById('exId').value;
+  if(id){
+    const x = DB.expenses.find(e=>e.id===id);
+    Object.assign(x, { date:document.getElementById('exDate').value, category, description:document.getElementById('exDescription').value, amount, method:document.getElementById('exMethod').value, notes:document.getElementById('exNotes').value });
+    toast('Expense updated successfully.');
+  } else {
+    DB.expenses.push({ id: uid('ex'), date:document.getElementById('exDate').value, category, description:document.getElementById('exDescription').value, amount, method:document.getElementById('exMethod').value, notes:document.getElementById('exNotes').value, createdAt:new Date().toISOString() });
+    toast('Expense added successfully.');
+  }
+  saveDB();
+  closeOverlay('overlayExpense');
+  populateStaticSelects();
+  refreshCurrentScreen();
+  return false;
+}
+
+/* ---- Customer form ---- */
+function openCustomerForm(existing){
+  document.getElementById('customerForm').reset();
+  document.getElementById('cuId').value='';
+  document.getElementById('customerFormTitle').textContent='Add Customer';
+  if(existing){
+    document.getElementById('customerFormTitle').textContent='Edit Customer';
+    document.getElementById('cuId').value = existing.id;
+    document.getElementById('cuName').value = existing.name;
+    document.getElementById('cuPhone').value = existing.phone||'';
+    document.getElementById('cuEmail').value = existing.email||'';
+    document.getElementById('cuNotes').value = existing.notes||'';
+  }
+  openOverlay('overlayCustomer');
+}
+function saveCustomer(e){
+  e.preventDefault();
+  const id = document.getElementById('cuId').value;
+  const name = document.getElementById('cuName').value.trim();
+  if(!name){ toast('Client name is required.', true); return false; }
+  if(id){
+    const c = DB.customers.find(c=>c.id===id);
+    Object.assign(c, { name, phone:document.getElementById('cuPhone').value.trim(), email:document.getElementById('cuEmail').value.trim(), notes:document.getElementById('cuNotes').value });
+    toast('Customer updated successfully.');
+  } else {
+    DB.customers.push({ id: uid('cust'), name, phone:document.getElementById('cuPhone').value.trim(), email:document.getElementById('cuEmail').value.trim(), notes:document.getElementById('cuNotes').value, dateAdded: todayISO() });
+    toast('Customer saved successfully.');
+  }
+  saveDB();
+  closeOverlay('overlayCustomer');
+  populateStaticSelects();
+  refreshCurrentScreen();
+  return false;
+}
+
+/* ---- Payment form ---- */
+function openPaymentForm(bookingId){
+  const b = DB.bookings.find(x=>x.id===bookingId);
+  if(!b) return;
+  document.getElementById('paymentForm').reset();
+  document.getElementById('payBookingId').value = bookingId;
+  document.getElementById('payDate').value = todayISO();
+  const bal = bookingBalance(b);
+  document.getElementById('payForBooking').textContent = `${b.bookingRef} — ${customerName(b.customerId)} — Balance due: ${fmtMoney(bal)}`;
+  document.getElementById('payAmount').value = bal>0? bal : '';
+  openOverlay('overlayPayment');
+}
+function openPaymentPicker(){
+  renderPaymentPickerList('');
+  openOverlay('overlayPaymentPicker');
+}
+function renderPaymentPickerList(q){
+  q = (q||'').toLowerCase();
+  const list = DB.bookings.filter(b=>b.status!=='Cancelled' && bookingBalance(b) > 0)
+    .filter(b=> !q || customerName(b.customerId).toLowerCase().includes(q) || b.bookingRef.toLowerCase().includes(q))
+    .sort((a,b)=> new Date(a.eventDate) - new Date(b.eventDate));
+  const el = document.getElementById('paymentPickerList');
+  if(list.length===0){ el.innerHTML = '<p class="empty sans">No bookings with outstanding balances.</p>'; return; }
+  el.innerHTML = list.map(b=>`
+    <div class="list-item">
+      <div class="li-main"><b>${customerName(b.customerId)}</b><span class="li-sub sans">${b.bookingRef} · ${fmtDateShort(b.eventDate)} · ${b.service}</span></div>
+      <div class="li-right"><div class="bal sans">Bal ${fmtMoney(bookingBalance(b))}</div>
+      <button class="btn btn-primary btn-sm sans" style="margin-top:6px" onclick="closeOverlay('overlayPaymentPicker');openPaymentForm('${b.id}')">Pay</button></div>
+    </div>`).join('');
+}
+function savePayment(e){
+  e.preventDefault();
+  const bookingId = document.getElementById('payBookingId').value;
+  const b = DB.bookings.find(x=>x.id===bookingId);
+  const amount = parseFloat(document.getElementById('payAmount').value)||0;
+  if(amount<=0){ toast('Enter a valid payment amount.', true); return false; }
+  DB.payments.push({ id: uid('pay'), bookingId, date:document.getElementById('payDate').value, amount, method:document.getElementById('payMethod').value, notes:document.getElementById('payNotes').value, createdAt:new Date().toISOString() });
+  saveDB();
+  closeOverlay('overlayPayment');
+  toast('Payment recorded successfully.');
+  refreshCurrentScreen();
+  return false;
+}
+
+function refreshCurrentScreen(){ goTo(currentScreen, currentScreen==='customerProfile'?lastCustomerId:(currentScreen==='bookingDetail'?lastBookingId:undefined)); }
+
+/* ===================== DASHBOARD ===================== */
+let dashPeriod = 'month';
+let dashCustomFrom=null, dashCustomTo=null;
+function renderDashChips(){
+  const opts=[['week','This Week'],['month','This Month'],['year','This Year'],['custom','Custom Range']];
+  document.getElementById('dashRangeChips').innerHTML = opts.map(o=>`<button class="chip sans ${dashPeriod===o[0]?'active':''}" onclick="setDashPeriod('${o[0]}')">${o[1]}</button>`).join('');
+  document.getElementById('dashCustomRange').style.display = dashPeriod==='custom' ? 'block':'none';
+}
+function setDashPeriod(p){ dashPeriod=p; renderDashChips(); if(p!=='custom') renderDashboard(); }
+function applyDashCustom(){
+  dashCustomFrom = document.getElementById('dashFrom').value;
+  dashCustomTo = document.getElementById('dashTo').value;
+  if(!dashCustomFrom||!dashCustomTo){ toast('Select both dates.', true); return; }
+  renderDashboard();
+}
+function currentDashRange(){
+  if(dashPeriod==='custom') return {from:dashCustomFrom||todayISO(), to:dashCustomTo||todayISO()};
+  return rangeFor(dashPeriod);
+}
+
+function renderDashboard(){
+  renderDashChips();
+  const {from,to} = currentDashRange();
+  document.getElementById('dashDateLabel').textContent = fmtDate(from)+' – '+fmtDate(to);
+
+  const periodPayments = DB.payments.filter(p=>withinRange(p.date, from, to));
+  const income = periodPayments.reduce((s,p)=>s+p.amount,0);
+  const periodExpenses = DB.expenses.filter(x=>withinRange(x.date, from, to));
+  const expenses = periodExpenses.reduce((s,x)=>s+x.amount,0);
+  const profit = income - expenses;
+
+  const activeBookings = DB.bookings.filter(b=>b.status!=='Cancelled');
+  const outstanding = activeBookings.reduce((s,b)=>s+bookingBalance(b),0);
+
+  const periodBookings = DB.bookings.filter(b=>withinRange(b.eventDate, from, to));
+  document.getElementById('mIncome').textContent = fmtMoney(income);
+  document.getElementById('mExpenses').textContent = fmtMoney(expenses);
+  document.getElementById('mProfit').textContent = fmtMoney(profit);
+  document.getElementById('mOutstanding').textContent = fmtMoney(outstanding);
+  document.getElementById('mTotalBookings').textContent = periodBookings.length;
+  document.getElementById('mPaidB').textContent = periodBookings.filter(b=>bookingPaymentStatus(b)==='Paid').length;
+  document.getElementById('mPartialB').textContent = periodBookings.filter(b=>bookingPaymentStatus(b)==='Partially Paid').length;
+  document.getElementById('mUnpaidB').textContent = periodBookings.filter(b=>bookingPaymentStatus(b)==='Unpaid').length;
+  const avg = periodBookings.length ? periodBookings.reduce((s,b)=>s+b.amountCharged,0)/periodBookings.length : 0;
+  document.getElementById('mAvgBooking').textContent = fmtMoney(avg);
+
+  // Upcoming bookings
+  const upcoming = DB.bookings.filter(b=>b.status!=='Cancelled' && b.eventDate >= todayISO()).sort((a,b)=>new Date(a.eventDate)-new Date(b.eventDate)).slice(0,5);
+  document.getElementById('dashUpcoming').innerHTML = upcoming.length ? upcoming.map(bookingRow).join('') : emptyState('No upcoming bookings.', "openBookingForm()", '+ Add Booking');
+
+  // Outstanding
+  const owing = activeBookings.filter(b=>bookingBalance(b)>0).sort((a,b)=>new Date(a.eventDate)-new Date(b.eventDate)).slice(0,5);
+  document.getElementById('dashOutstanding').innerHTML = owing.length ? owing.map(outstandingRow).join('') : emptyState("You're all caught up. No outstanding payments.");
+
+  renderDashCharts();
+}
+
+function bookingRow(b){
+  const bal = bookingBalance(b);
+  const ps = bookingPaymentStatus(b);
+  return `<div class="list-item" style="cursor:pointer" onclick="goTo('bookingDetail','${b.id}')">
+    <div class="li-main"><b>${customerName(b.customerId)}</b><span class="li-sub sans">${fmtDateShort(b.eventDate)} · ${b.service}</span>
+    <span class="badge ${b.status.toLowerCase()} sans">${b.status}</span></div>
+    <div class="li-right"><div class="amt">${fmtMoney(b.amountCharged)}</div><div class="li-sub sans">Paid ${fmtMoney(bookingPaid(b.id))}</div>
+    <span class="badge ${ps.toLowerCase().replace(' ','')==='partiallypaid'?'partial':ps.toLowerCase()} sans">${ps}</span></div>
+  </div>`;
+}
+function outstandingRow(b){
+  return `<div class="list-item" style="cursor:pointer" onclick="goTo('bookingDetail','${b.id}')">
+    <div class="li-main"><b>${customerName(b.customerId)}</b><span class="li-sub sans">${fmtDateShort(b.eventDate)} · Charged ${fmtMoney(b.amountCharged)}</span></div>
+    <div class="li-right"><div class="bal">${fmtMoney(bookingBalance(b))}</div>
+    <button class="btn btn-primary btn-sm sans" style="margin-top:6px" onclick="event.stopPropagation();openPaymentForm('${b.id}')">Record Payment</button></div>
+  </div>`;
+}
+function emptyState(msg, onclickFn, btnLabel){
+  return `<div class="empty sans"><p>${msg}</p>${onclickFn? `<button class="btn btn-gold btn-sm" onclick="${onclickFn}">${btnLabel}</button>`:''}</div>`;
+}
+
+let chartIncExp, chartExpCat, chartIncomeTrend;
+function last6Months(){
+  const arr=[];
+  const now = new Date();
+  for(let i=5;i>=0;i--){
+    const d = new Date(now.getFullYear(), now.getMonth()-i, 1);
+    arr.push({label:d.toLocaleDateString('en-NG',{month:'short'}), from:new Date(d.getFullYear(),d.getMonth(),1).toISOString().slice(0,10), to:new Date(d.getFullYear(),d.getMonth()+1,0).toISOString().slice(0,10)});
+  }
+  return arr;
+}
+function renderDashCharts(){
+  const months = last6Months();
+  const incomeData = months.map(m=>DB.payments.filter(p=>withinRange(p.date,m.from,m.to)).reduce((s,p)=>s+p.amount,0));
+  const expenseData = months.map(m=>DB.expenses.filter(x=>withinRange(x.date,m.from,m.to)).reduce((s,x)=>s+x.amount,0));
+
+  const gridColor = getComputedStyle(document.documentElement).getPropertyValue('--line');
+  const ink = getComputedStyle(document.documentElement).getPropertyValue('--ink');
+
+  if(chartIncExp) chartIncExp.destroy();
+  chartIncExp = new Chart(document.getElementById('chartIncExp'), {
+    type:'bar',
+    data:{ labels:months.map(m=>m.label), datasets:[
+      {label:'Income', data:incomeData, backgroundColor:'#0E6B4E'},
+      {label:'Expenses', data:expenseData, backgroundColor:'#A23B2E'}
+    ]},
+    options:{responsive:true, plugins:{legend:{labels:{color:ink}}}, scales:{x:{ticks:{color:ink},grid:{color:gridColor}}, y:{ticks:{color:ink},grid:{color:gridColor}}}}
+  });
+
+  const {from,to} = currentDashRange();
+  const catTotals = {};
+  DB.expenses.filter(x=>withinRange(x.date,from,to)).forEach(x=>{ catTotals[x.category]=(catTotals[x.category]||0)+x.amount; });
+  const catLabels = Object.keys(catTotals);
+  if(chartExpCat) chartExpCat.destroy();
+  chartExpCat = new Chart(document.getElementById('chartExpCat'), {
+    type:'doughnut',
+    data:{ labels: catLabels.length? catLabels: ['No expenses yet'], datasets:[{ data: catLabels.length? catLabels.map(c=>catTotals[c]) : [1],
+      backgroundColor:['#1B2E6B','#C9A227','#0E6B4E','#A23B2E','#6B6656','#3B57B8','#9C7E1B','#8A2E24','#1B6B3F','#3F2E8A','#7A5E12','#2C2F42'] }]},
+    options:{responsive:true, plugins:{legend:{position:'bottom', labels:{color:ink, boxWidth:10, font:{size:10}}}}}
+  });
+
+  if(chartIncomeTrend) chartIncomeTrend.destroy();
+  chartIncomeTrend = new Chart(document.getElementById('chartIncomeTrend'), {
+    type:'line',
+    data:{ labels:months.map(m=>m.label), datasets:[{ label:'Income', data:incomeData, borderColor:'#C9A227', backgroundColor:'rgba(201,162,39,.18)', fill:true, tension:.3 }]},
+    options:{responsive:true, plugins:{legend:{display:false}}, scales:{x:{ticks:{color:ink},grid:{color:gridColor}}, y:{ticks:{color:ink},grid:{color:gridColor}}}}
+  });
+}
+
+/* ===================== BOOKINGS ===================== */
+function renderBookings(){
+  populateStaticSelects();
+  const q = (document.getElementById('bookingSearch').value||'').toLowerCase();
+  const dateF = document.getElementById('fBookingDate').value;
+  const statusF = document.getElementById('fBookingStatus').value;
+  const payF = document.getElementById('fPaymentStatus').value;
+  const svcF = document.getElementById('fService').value;
+
+  let list = [...DB.bookings];
+  if(dateF!=='all'){ const {from,to} = rangeFor(dateF); list = list.filter(b=>withinRange(b.eventDate,from,to)); }
+  if(statusF!=='all') list = list.filter(b=>b.status===statusF);
+  if(payF!=='all') list = list.filter(b=>bookingPaymentStatus(b)===payF);
+  if(svcF!=='all') list = list.filter(b=>b.service===svcF);
+  if(q) list = list.filter(b=> customerName(b.customerId).toLowerCase().includes(q) || b.bookingRef.toLowerCase().includes(q) || b.service.toLowerCase().includes(q) || (customerById(b.customerId)&&customerById(b.customerId).phone||'').includes(q));
+
+  list.sort((a,b)=> new Date(b.eventDate) - new Date(a.eventDate));
+  document.getElementById('bookingsCount').textContent = list.length+' booking'+(list.length===1?'':'s');
+  const el = document.getElementById('bookingsList');
+  el.innerHTML = list.length ? list.map(b=>`
+    <div class="list-item" style="cursor:pointer" onclick="goTo('bookingDetail','${b.id}')">
+      <div class="li-main"><b>${customerName(b.customerId)}</b><span class="li-sub sans">${b.bookingRef} · ${fmtDateShort(b.eventDate)} · ${b.service}</span>
+      <span class="badge ${b.status.toLowerCase()} sans">${b.status}</span></div>
+      <div class="li-right"><div class="amt">${fmtMoney(b.amountCharged)}</div>
+      <span class="badge ${bookingPaymentStatus(b).toLowerCase().replace(' ','')==='partiallypaid'?'partial':bookingPaymentStatus(b).toLowerCase()} sans">${bookingPaymentStatus(b)}</span></div>
+    </div>`).join('') : emptyState('No bookings recorded yet.', 'openBookingForm()', '+ Add Booking');
+}
+
+let lastBookingId=null;
+function renderBookingDetail(id){
+  lastBookingId=id;
+  const b = DB.bookings.find(x=>x.id===id);
+  if(!b){ document.getElementById('bookingDetailBody').innerHTML='<p class="sans">Booking not found.</p>'; return; }
+  const paid = bookingPaid(id); const bal = bookingBalance(b); const ps = bookingPaymentStatus(b);
+  const pays = bookingPayments(id).sort((a,b)=>new Date(b.date)-new Date(a.date));
+  const c = customerById(b.customerId);
+  document.getElementById('bookingDetailBody').innerHTML = `
+    <div class="section-block">
+      <div class="headrow"><h3>${b.bookingRef}</h3><span class="badge ${b.status.toLowerCase()} sans">${b.status}</span></div>
+      <p class="sans" style="font-size:15px;font-weight:600;margin-bottom:2px">${customerName(b.customerId)}</p>
+      <p class="sans" style="font-size:12.5px;color:var(--muted)">${c&&c.phone||''} ${c&&c.email?' · '+c.email:''}</p>
+      <div class="formgrid sans" style="margin-top:14px;font-size:13px">
+        <div><b class="sans">Event Date</b><br>${fmtDate(b.eventDate)}</div>
+        <div><b class="sans">Booking Date</b><br>${fmtDate(b.bookingDate)}</div>
+        <div><b class="sans">Service</b><br>${b.service}</div>
+        <div><b class="sans">Event Type</b><br>${b.eventType||'—'}</div>
+        <div><b class="sans">Location</b><br>${b.location||'—'}</div>
+        <div><b class="sans">People</b><br>${b.people||1}</div>
+      </div>
+      ${b.notes? `<p class="sans" style="margin-top:10px;font-size:13px;color:var(--muted)">Notes: ${b.notes}</p>`:''}
+      <div style="display:flex;gap:10px;margin-top:14px">
+        <button class="btn btn-outline btn-sm sans" onclick="openBookingForm(DB.bookings.find(x=>x.id==='${b.id}'))">Edit</button>
+        ${b.status!=='Cancelled' ? `<button class="btn btn-danger btn-sm sans" onclick="cancelBooking('${b.id}')">Cancel Booking</button>` : ''}
+      </div>
+    </div>
+    <div class="cardgrid">
+      <div class="metric"><div class="m-label sans">Charged</div><div class="m-value">${fmtMoney(b.amountCharged)}</div></div>
+      <div class="metric emerald"><div class="m-label sans">Paid</div><div class="m-value">${fmtMoney(paid)}</div></div>
+      <div class="metric gold"><div class="m-label sans">Balance</div><div class="m-value">${fmtMoney(bal)}</div></div>
+      <div class="metric"><div class="m-label sans">Status</div><div class="m-value" style="font-size:14px">${ps}</div></div>
+    </div>
+    <div class="section-block">
+      <div class="headrow"><h3>Payment History</h3>${bal>0?`<button class="btn btn-gold btn-sm sans" onclick="openPaymentForm('${b.id}')">+ Record Payment</button>`:''}</div>
+      ${pays.length? pays.map(p=>`<div class="list-item"><div class="li-main"><b>${fmtMoney(p.amount)}</b><span class="li-sub sans">${fmtDate(p.date)} · ${p.method}${p.notes?' · '+p.notes:''}</span></div></div>`).join('') : emptyState('No payments recorded yet for this booking.')}
+    </div>`;
+}
+function cancelBooking(id){
+  const b = DB.bookings.find(x=>x.id===id);
+  if(!confirm('Cancel this booking? It will remain in history.')) return;
+  b.status='Cancelled'; b.updatedAt=new Date().toISOString();
+  saveDB(); toast('Booking updated successfully.'); renderBookingDetail(id);
+}
+
+/* ===================== OUTSTANDING SCREEN ===================== */
+let outstandingSort='balance';
+function renderOutstandingScreen(){
+  const opts=[['balance','Highest Balance'],['nearest','Nearest Event'],['oldest','Oldest Outstanding']];
+  document.getElementById('outstandingSort').innerHTML = opts.map(o=>`<button class="chip ${outstandingSort===o[0]?'active':''}" onclick="setOutstandingSort('${o[0]}')">${o[1]}</button>`).join('');
+  let list = DB.bookings.filter(b=>b.status!=='Cancelled' && bookingBalance(b)>0);
+  if(outstandingSort==='balance') list.sort((a,b)=>bookingBalance(b)-bookingBalance(a));
+  if(outstandingSort==='nearest') list.sort((a,b)=>new Date(a.eventDate)-new Date(b.eventDate));
+  if(outstandingSort==='oldest') list.sort((a,b)=>new Date(a.bookingDate)-new Date(b.bookingDate));
+  document.getElementById('outstandingList').innerHTML = list.length ? list.map(outstandingRow).join('') : emptyState("You're all caught up. No outstanding payments.");
+}
+function setOutstandingSort(s){ outstandingSort=s; renderOutstandingScreen(); }
+
+/* ===================== CUSTOMERS ===================== */
+function renderCustomers(){
+  const q = (document.getElementById('customerSearch').value||'').toLowerCase();
+  let list = DB.customers.filter(c=> !q || c.name.toLowerCase().includes(q) || (c.phone||'').includes(q) || (c.email||'').toLowerCase().includes(q));
+  list.sort((a,b)=>a.name.localeCompare(b.name));
+  document.getElementById('customersCount').textContent = list.length+' customer'+(list.length===1?'':'s');
+  document.getElementById('customersList').innerHTML = list.length ? list.map(c=>{
+    const cb = DB.bookings.filter(b=>b.customerId===c.id);
+    const outstanding = cb.filter(b=>b.status!=='Cancelled').reduce((s,b)=>s+bookingBalance(b),0);
+    return `<div class="list-item" style="cursor:pointer" onclick="goTo('customerProfile','${c.id}')">
+      <div class="li-main"><b>${c.name}</b><span class="li-sub sans">${c.phone||'No phone'} · ${cb.length} booking${cb.length===1?'':'s'}</span></div>
+      <div class="li-right">${outstanding>0? `<div class="bal">${fmtMoney(outstanding)} due</div>`:'<div class="li-sub sans">No balance</div>'}</div>
+    </div>`;
+  }).join('') : emptyState('No customers yet.', 'openCustomerForm()', '+ Add Customer');
+}
+
+let lastCustomerId=null;
+function renderCustomerProfile(id){
+  lastCustomerId=id;
+  const c = customerById(id);
+  if(!c){ document.getElementById('customerProfileBody').innerHTML='<p class="sans">Customer not found.</p>'; return; }
+  const cb = DB.bookings.filter(b=>b.customerId===id);
+  const totalCharged = cb.reduce((s,b)=>s+b.amountCharged,0);
+  const totalPaid = cb.reduce((s,b)=>s+bookingPaid(b.id),0);
+  const outstanding = cb.filter(b=>b.status!=='Cancelled').reduce((s,b)=>s+bookingBalance(b),0);
+  const sorted = [...cb].sort((a,b)=>new Date(b.eventDate)-new Date(a.eventDate));
+  document.getElementById('customerProfileBody').innerHTML = `
+    <div class="customer-hero">
+      <h2>${c.name}</h2>
+      <p class="sans" style="font-size:12.5px;color:var(--gold-soft);margin-top:4px">${c.phone||''}${c.email?' · '+c.email:''}</p>
+      <div class="chstats sans">
+        <div><span>Bookings</span><b>${cb.length}</b></div>
+        <div><span>Total Charged</span><b>${fmtMoney(totalCharged)}</b></div>
+        <div><span>Total Paid</span><b>${fmtMoney(totalPaid)}</b></div>
+        <div><span>Outstanding</span><b>${fmtMoney(outstanding)}</b></div>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;margin-bottom:16px">
+      <button class="btn btn-outline btn-sm sans" onclick="openCustomerForm(DB.customers.find(x=>x.id==='${c.id}'))">Edit Customer</button>
+      <button class="btn btn-gold btn-sm sans" onclick="document.getElementById('bkCustomer').value='${c.id}';openBookingForm()">+ New Booking</button>
+    </div>
+    ${c.notes? `<div class="section-block sans" style="font-size:13px;color:var(--muted)">Notes: ${c.notes}</div>`:''}
+    <div class="section-block"><h3>Booking History</h3>
+      ${sorted.length? sorted.map(bookingRow).join('') : emptyState('No bookings for this customer yet.')}
+    </div>`;
+}
+
+/* ===================== EXPENSES ===================== */
+function renderExpenses(){
+  populateStaticSelects();
+  const q = (document.getElementById('expenseSearch').value||'').toLowerCase();
+  const dateF = document.getElementById('fExpenseDate').value;
+  const catF = document.getElementById('fExpenseCategory').value;
+  let list = [...DB.expenses];
+  if(dateF!=='all'){ const {from,to}=rangeFor(dateF); list = list.filter(x=>withinRange(x.date,from,to)); }
+  if(catF!=='all') list = list.filter(x=>x.category===catF);
+  if(q) list = list.filter(x=> x.description.toLowerCase().includes(q) || x.category.toLowerCase().includes(q));
+  list.sort((a,b)=>new Date(b.date)-new Date(a.date));
+  document.getElementById('expensesCount').textContent = list.length+' expense'+(list.length===1?'':'s');
+  document.getElementById('expTotalFiltered').textContent = fmtMoney(list.reduce((s,x)=>s+x.amount,0));
+  document.getElementById('expensesList').innerHTML = list.length ? list.map(x=>`
+    <div class="list-item">
+      <div class="li-main"><b>${x.description}</b><span class="li-sub sans">${fmtDateShort(x.date)} · ${x.category} · ${x.method}</span></div>
+      <div class="li-right"><div class="amt">${fmtMoney(x.amount)}</div>
+      <button class="linklike sans" style="margin-top:6px;background:none;border:none" onclick="openExpenseForm(DB.expenses.find(e=>e.id==='${x.id}'))">Edit</button></div>
+    </div>`).join('') : emptyState('No expenses recorded for this period.', 'openExpenseForm()', '+ Add Expense');
+}
+
+/* ===================== REPORTS ===================== */
+let reportPeriod='month'; let reportCustomFrom=null, reportCustomTo=null;
+function renderReportChips(){
+  const opts=[['week','Weekly'],['month','Monthly'],['year','Yearly'],['custom','Custom Range']];
+  document.getElementById('reportRangeChips').innerHTML = opts.map(o=>`<button class="chip sans ${reportPeriod===o[0]?'active':''}" onclick="setReportPeriod('${o[0]}')">${o[1]}</button>`).join('');
+  document.getElementById('reportCustomRange').style.display = reportPeriod==='custom' ? 'block':'none';
+}
+function setReportPeriod(p){ reportPeriod=p; renderReportChips(); if(p!=='custom') renderReports(); }
+function applyReportCustom(){
+  reportCustomFrom = document.getElementById('repFrom').value;
+  reportCustomTo = document.getElementById('repTo').value;
+  if(!reportCustomFrom||!reportCustomTo){ toast('Select both dates.', true); return; }
+  renderReports();
+}
+function currentReportRange(){
+  if(reportPeriod==='custom') return {from:reportCustomFrom||todayISO(), to:reportCustomTo||todayISO()};
+  return rangeFor(reportPeriod);
+}
+function computeReport(from,to){
+  const bks = DB.bookings.filter(b=>withinRange(b.eventDate,from,to));
+  const pays = DB.payments.filter(p=>withinRange(p.date,from,to));
+  const exps = DB.expenses.filter(x=>withinRange(x.date,from,to));
+  const bookingValue = bks.reduce((s,b)=>s+b.amountCharged,0);
+  const received = pays.reduce((s,p)=>s+p.amount,0);
+  const outstanding = bks.filter(b=>b.status!=='Cancelled').reduce((s,b)=>s+bookingBalance(b),0);
+  const expenseTotal = exps.reduce((s,x)=>s+x.amount,0);
+  return { count:bks.length, bookingValue, received, outstanding, expenseTotal, profit: received-expenseTotal, avg: bks.length? bookingValue/bks.length:0 };
+}
+function renderReports(){
+  renderReportChips();
+  const {from,to} = currentReportRange();
+  const label = reportPeriod==='week'?'This Week': reportPeriod==='month'?'This Month': reportPeriod==='year'?'This Year' : fmtDate(from)+' – '+fmtDate(to);
+  document.getElementById('reportTitle').textContent = label;
+  const r = computeReport(from,to);
+  document.getElementById('rBookings').textContent = r.count;
+  document.getElementById('rBookingValue').textContent = fmtMoney(r.bookingValue);
+  document.getElementById('rReceived').textContent = fmtMoney(r.received);
+  document.getElementById('rOutstanding').textContent = fmtMoney(r.outstanding);
+  document.getElementById('rExpenses').textContent = fmtMoney(r.expenseTotal);
+  document.getElementById('rProfit').textContent = fmtMoney(r.profit);
+  document.getElementById('rAvg').textContent = fmtMoney(r.avg);
+
+  const yw = document.getElementById('yearlyBreakdownWrap');
+  if(reportPeriod==='year'){
+    yw.style.display='block';
+    const yr = new Date(from).getFullYear();
+    const tbody = document.querySelector('#monthlyBreakdownTable tbody');
+    let rows='';
+    for(let m=0;m<12;m++){
+      const mf = new Date(yr,m,1).toISOString().slice(0,10);
+      const mt = new Date(yr,m+1,0).toISOString().slice(0,10);
+      const mr = computeReport(mf,mt);
+      rows += `<tr><td>${new Date(yr,m,1).toLocaleDateString('en-NG',{month:'short'})}</td><td>${mr.count}</td><td>${fmtMoney(mr.received)}</td><td>${fmtMoney(mr.expenseTotal)}</td><td>${fmtMoney(mr.profit)}</td></tr>`;
+    }
+    tbody.innerHTML = rows;
+  } else { yw.style.display='none'; }
+}
+
+/* ===================== CSV EXPORT ===================== */
+function toCSV(rows){
+  return rows.map(r=>r.map(v=>{
+    v = (v===undefined||v===null)?'':String(v);
+    if(v.includes(',')||v.includes('"')||v.includes('\n')) v = '"'+v.replace(/"/g,'""')+'"';
+    return v;
+  }).join(',')).join('\n');
+}
+function downloadCSV(filename, csv){
+  const blob = new Blob([csv], {type:'text/csv'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href=url; a.download=filename; document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+function exportCSV(kind){
+  if(kind==='bookings'){
+    const rows=[['Booking Ref','Client','Booking Date','Event Date','Service','Event Type','Location','Amount Charged','Amount Paid','Outstanding','Payment Status','Booking Status']];
+    DB.bookings.forEach(b=>rows.push([b.bookingRef, customerName(b.customerId), b.bookingDate, b.eventDate, b.service, b.eventType, b.location, b.amountCharged, bookingPaid(b.id), bookingBalance(b), bookingPaymentStatus(b), b.status]));
+    downloadCSV('nomicrafts_bookings.csv', toCSV(rows));
+  } else if(kind==='expenses'){
+    const rows=[['Date','Category','Description','Amount','Method','Notes']];
+    DB.expenses.forEach(x=>rows.push([x.date,x.category,x.description,x.amount,x.method,x.notes]));
+    downloadCSV('nomicrafts_expenses.csv', toCSV(rows));
+  } else if(kind==='report'){
+    const {from,to} = currentReportRange();
+    const r = computeReport(from,to);
+    const rows=[['Metric','Value'],['Period', fmtDate(from)+' to '+fmtDate(to)],['Bookings', r.count],['Booking Value', r.bookingValue],['Amount Received', r.received],['Outstanding', r.outstanding],['Expenses', r.expenseTotal],['Net Profit', r.profit],['Average Booking Value', Math.round(r.avg)]];
+    downloadCSV('nomicrafts_report.csv', toCSV(rows));
+  }
+  toast('Export ready — check your downloads.');
+}
+</script>
+</body>
+</html>
